@@ -33,6 +33,3 @@ class Quotes:
         data.to_csv(data_path,index=False)
 
 
-#info = Quotes(quote,start_date,end_date)
-#data = info.get_data()
-#print(data)
