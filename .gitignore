@@ -2,3 +2,5 @@ venv/
 *.txt
 *.csv
 *.pcy
+.idea
+commodities/
