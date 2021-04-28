@@ -26,9 +26,10 @@ class Quotes:
         except RuntimeError:
             print(f'symbol {self.quote} not found')
 
-    def data_to_csv(self,data,file_name):
+    def data_to_csv(self,data,path,file_name):
         
-        data_path = f'{path}/{file_name}.csv'
+        data_path = f'{self.path}/{file_name}.csv'
+        print('this is the datapath:', data_path)
         data.to_csv(data_path,index=False)
 
 

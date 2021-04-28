@@ -5,7 +5,7 @@ class Folders:
     def __init__(self,name):
         self.name = name
         # path name
-        self.path = os.path.abspath(__name__).replace(__name__,'')+name
+        self.path = os.path.abspath(__name__).replace(__name__,'')+name+"/"
         # boolean for path existance
         self.commodities = os.path.exists(self.path)
         

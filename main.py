@@ -10,15 +10,13 @@ def main(quotes,path,start_date, end_date,
         quote_setup = cq.Quotes(quote,start_date,end_date)
         
         data = quote_setup.get_data()
+        print(path+quote+'.csv')
+        data.to_csv(path+quote+'.csv')
 
-#print('my path:   ',path)
- #           data.to_csv(path+quote+'.csv',index=False)
-        
-        try:
-            print('my path:   ',path)
-            data.to_csv(path+quote+'.csv',index=False)
-        except AttributeError:
-            pass
+
+
+
+
 
 
 if __name__=='__main__':
@@ -33,7 +31,7 @@ if __name__=='__main__':
     
     start_date = '01/01/2020'
     end_date = '01/01/2021'
-    quotes = ['Gold','CL']
+    quotes = ['Gold','Crude Oil WTI','US Corn']
     
     main(quotes,path,start_date,end_date)
     
