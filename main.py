@@ -1,19 +1,21 @@
 import commodities_quotes as cq
 import setup
 import os
+import time
+import pandas as pd
 
 
-def main(quotes,path,start_date, end_date,
+def initial_download(quotes,path,start_date, end_date,
          instrument_type='commodities', ):
     #=os.path.abspath(__name__)):
     for quote in quotes:
         quote_setup = cq.Quotes(quote,start_date,end_date)
         
         data = quote_setup.get_data()
+        data = quote_setup.moving_average(data)
+
         print(path+quote+'.csv')
         data.to_csv(path+quote+'.csv')
-
-
 
 
 
@@ -27,10 +29,10 @@ if __name__=='__main__':
     path = setup_.path
     print(path)
     
-    start_date = '01/01/2020'
-    end_date = '01/01/2021'
+    start_date = '01/01/2010'
+    end_date = '01/04/2021'
     quotes = ['Gold','Crude Oil WTI','US Corn']
-    
-    main(quotes,path,start_date,end_date)
+    initial_download(quotes,path,start_date, end_date,
+         instrument_type='commodities')
     
     
