@@ -6,9 +6,6 @@ import ta
 from ta.trend import SMAIndicator
 from ta import add_all_ta_features
 import matplotlib.pyplot as plt
-start_date = '1/1/2020'
-end_date = '1/1/2021'
-quote = 'Gold'
 
 
 class Quotes:
@@ -17,6 +14,7 @@ class Quotes:
         self.start_date = start_date
         self.end_date= end_date
         self.time_int = time_int
+        self.data = self.get_data()
 
     def get_data(self):
         try:
@@ -25,27 +23,15 @@ class Quotes:
                 from_date= self.start_date,
                 to_date= self.end_date
                 )
+            add_indicators()
+
             return data
         except RuntimeError:
             print(f'symbol {self.quote} not found')
 
-    def recent(self):
-        try:
-            data = inv.commodities.get_commodity_recent_data(self.quote)
-        except:
-            pass
-
-    def moving_average(self,data):
-        data.dropna(inplace=True)
-        data['ma'] = SMAIndicator(data['Close'], 20).sma_indicator()
-        return data
-
-    def rsi(self,data):
-        pass
-
-    def adx(self,data):
-        pass
-
+    @staticmethod
+    def add_indicators():
+        clf.data['ma'] = SMAIndicator(data['Close'],20).sma_indicator()
 
 
     def data_to_csv(self,data,path,file_name):
@@ -105,11 +91,36 @@ class Signals(Quotes):
 
 
 if __name__=='__main__':
-    c = Quotes(quote,start_date,end_date)
-    data = c.get_data()
-    data = c.moving_average(data)
-    print(data)
-    c = Signals()
+
+    start_date = '1/1/2020'
+    end_date = '1/1/2021'
+    quotes = ['Gold','Crude Oil WTI','US Corn']
+
+    data = [Quotes(quote,start_date,end_date).data for quote in quotes]
+
+    oed_data = dict(zip(quotes,data))
+
+    print(oed_data['Gold'])
+
+    oed_data['Natural Gas'] = Quotes('Natural Gas',start_date,end_date).data
+
+    print(oed_data.keys())
+    # print(oed_data['Crude Oil WTI'].keys())
+    # gold = Quotes('Gold',start_date,end_date)
+    # oil = Quotes('Crude Oil WTI',start_date,end_date)
+    # print('\n\nthis is oil data')
+    # print(oil.data)
+
+    # print('\n\n This is gold data:')
+    # print(gold.data)
+
+    # print('\n\nthis is oil data')
+    # print(oil.data)
+
+    # data = c.get_data()
+    # data = c.moving_average(data)
+    # print(data)
+    # c = Signals()
     # c.total_score()
     
 
