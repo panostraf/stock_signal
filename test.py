@@ -2,70 +2,90 @@ import investpy as inv
 import pandas as pd
 from tkinter import *
 from tkinter import ttk
-
-
+import time
+import threading
+import commodities_quotes
 # commodities_l = inv.get_commodities()
 # for item in commodities_l['name']:
 #     print(item)
 
 
 class MainWindow:
-	
+    
 
-	def __init__(self,master):
-		self.columns = ['Contract','Strength','Signal','Last Check','test1','test2']
+    def __init__(self,master):
+        self.columns = ['Contract','Strength','Signal',
+                        'Last','High','Low','Open','Volume',
+                        'SMA','RSI','MACD','ADX']
 
-		# Main Frame to host all subframes of the window
-		self.main_frame = Frame(master)
-		self.main_frame.pack(fill = BOTH,expand=1)
+        # Main Frame to host all subframes of the window
+        self.main_frame = Frame(master)
+        self.main_frame.pack(fill = BOTH,expand=1)
 
-		# Headers frame and content frame are subframes of main
-		self.headers = Frame(self.main_frame,height=50)
-		self.headers.pack(side=TOP,fill='x')
+        # Headers frame and content frame are subframes of main
+        self.headers = Frame(self.main_frame,height=50)
+        self.headers.pack(side=TOP,fill='x')
 
-		self.content = Frame(self.main_frame)
-		self.content.pack(side=BOTTOM,fill=BOTH,expand=1)
+        self.content = Frame(self.main_frame)
+        self.content.pack(side=BOTTOM,fill=BOTH,expand=1)
 
-		# On content frame there are 2 subframes
-		# one left for buttons and one for the treeview
-		self.options = Frame(self.content,width=150)
-		self.options.pack(side=LEFT,fill='y')
+        # On content frame there are 2 subframes
+        # one left for buttons and one for the treeview
+        self.options = Frame(self.content,width=0)
+        self.options.pack(side=LEFT,fill='y')
 
-		self.signals = Frame(self.content)
-		self.signals.pack(side=RIGHT,fill=BOTH,expand=1)
+        self.signals = Frame(self.content)
+        self.signals.pack(side=RIGHT,fill=BOTH,expand=1)
 
-		# Create treeview object
-		self.signals_tree()
+        # Create treeview object
+        self.tree_ = self.signals_tree()
+        self.tree_.pack(fill=BOTH,expand=1,padx=10,pady=10)
+        #populate tree
+        self.add_values()
 
-		# Create refresh Button
-		self.refresh_btn = Button(self.headers,text='refresh',command=lambda: self.refresh())
-		# self.refresh_btn.config(fg='RoyalBlue2')
-		self.refresh_btn.pack()
-		# Create send me notification button
 
-	def signals_tree(self):
-		signals_tree = ttk.Treeview(self.signals)
-		signals_tree['columns'] = tuple(self.columns)
-		signals_tree.column("#0",minwidth=10)
-		signals_tree.heading("#0",text='Label',anchor=CENTER)
+        threading.Thread(target = self.notifications).start()
 
-		for column in self.columns:
-			signals_tree.column(column,anchor=CENTER,width=100)
-			signals_tree.heading(column,anchor=CENTER,text=column)
 
-		signals_tree.pack(fill=BOTH,expand=1)
+    def signals_tree(self):
+        signals_tree = ttk.Treeview(self.signals)
+        signals_tree['columns'] = tuple(self.columns)
+        signals_tree.column("#0",width=0,stretch=NO)
+        signals_tree.heading("#0",text='',anchor=CENTER)
 
-	def add_values(self):
-		pass
+        for column in self.columns:
+            signals_tree.column(column,anchor=CENTER,width=100)
+            signals_tree.heading(column,anchor=CENTER,text=column)
+        return signals_tree
+        
 
-	def clear_tree(self):
-		pass
+    def add_values(self):
+        data = open('signal_status.csv','r').readlines()
+        counter = 0
+        for line in data:
+            line = line.split(',')
+            values = tuple(item for item in line)
+            self.tree_.insert(parent='',index='end',iid=counter,text='',values=values) 
+            counter +=1
 
-	def refresh(self):
-		
 
-	def notifications(self):
-		pass
+    def clear_tree(self):
+        for record in self.tree_.get_children():
+            self.tree_.delete(record)
+
+
+    def refresh(self):
+        self.clear_tree()
+        self.add_values()
+        # self.add_values()
+
+    def notifications(self):
+        while True:
+            commodities_quotes.main()
+            self.refresh()
+            time.sleep(5)
+
+            
 
 
 
@@ -76,7 +96,7 @@ class MainWindow:
 
 
 if __name__=='__main__':
-	root = Tk()
-	root.geometry("800x800")
-	MainWindow(root)
-	root.mainloop()
+    root = Tk()
+    root.geometry("800x800")
+    MainWindow(root)
+    root.mainloop()

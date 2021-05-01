@@ -4,6 +4,7 @@ import setup
 import os
 import ta
 from ta.trend import SMAIndicator
+from ta.momentum import RSIIndicator
 from ta import add_all_ta_features
 import matplotlib.pyplot as plt
 
@@ -23,105 +24,135 @@ class Quotes:
                 from_date= self.start_date,
                 to_date= self.end_date
                 )
-            add_indicators()
+            self.add_indicators(data)
+            
 
             return data
         except RuntimeError:
             print(f'symbol {self.quote} not found')
 
-    @staticmethod
-    def add_indicators():
-        clf.data['ma'] = SMAIndicator(data['Close'],20).sma_indicator()
+    
+    def add_indicators(self,data):
+
+        # SMA n =20
+        data['ma'] = SMAIndicator(data['Close'],20).sma_indicator()
+        data['rsi'] = RSIIndicator(data['Close'],14).rsi()
+
+        return data
 
 
-    def data_to_csv(self,data,path,file_name):
-        
-        data_path = f'{self.path}/{file_name}.csv'
-        print('this is the datapath:', data_path)
-        data.to_csv(data_path,index=False)
-
-    def simple_plot(self,data):
-        plt.figure(1)
-        plt.plot(data.index,data['Close'])
-        plt.plot(data.index,data['ma'])
-        plt.show()
-
-
-class Signals(Quotes):
-    def __init__(self):
-        super().__init__(self)
-        self.quote=quote
-        self.start_date = start_date
-        self.end_date= end_date
-        self.time_int = time_int
-        self.data = data
+class Score:
+    def __init__(self,data):
         self.total_score = 0
+        self.data = data
+        self.signal = 'Neutral'
+        try:
+            self.ma_price_cross()
+        except:
+            pass
+        try:
+            self.trend()
+        except:
+            pass
+        try:
+            self.rsi()
+        except:
+            pass
+
+        self.signal_weight()
         
 
-    def trend_score(self):
-        last_value = self.data['Close'][-3:].mean()
-        last_ma = self.data['ma'][-3:].mean()
-        score = 0
-        if last_value > last_ma:
-            score += 1
-        else:
-            score -=1
-
-        self.total_score += score
-
-
-    def ma_cross(self):
-        last_value = self.data['Close'][-1:]
-        last_ma = self.data['ma'][-1:]
-        last_value_n1 = self.data['Close'][-2:]
-        last_ma_n1 = self.data['ma'][-2:]
-        score = 0
-        if last_value > last_ma and last_ma_n1 < last_ma_n1:
-            score += 1
-        elif last_value < last_ma and last_ma_n1 > last_ma_n1:
-            score -= 1
+    def ma_price_cross(self):
+        if self.data['Close'][-1] > self.data['ma'][-1] and self.data['Close'][-2] < self.data['ma'][-2]:
+            self.total_score += 4
+        elif self.data['Close'][-1] < self.data['ma'][-1] and self.data['Close'][-2] > self.data['ma'][-2]:
+            self.total_score -= 4
         else:
             pass
 
-        self.total_score += score
+    def trend(self):
+        if self.data['Close'][-1] > self.data['Close'][-2]:
+            self.total_score += 4
+        elif self.data['Close'][-1] < self.data['Close'][-2]:
+            self.total_score -= 4
+        else:
+            pass
 
-    def total_score(self):
-        self.total_score = self.total_score + self.trend_score() + self.ma_cross()
-        # self.score
+    def rsi(self):
+        # Cross above 30
+        if self.data['rsi'][-2] < 30 and self.data['rsi'][-1] > 30:
+            self.total_score += 4
+
+        # Cross bellow 70
+        elif self.data['rsi'][-2] >70 and self.data['rsi'][-1] < 70:
+            self.total_score -= 4
+
+        # Cross above 50
+        elif self.data['rsi'][-2] < 50 and self.data['rsi'][-1] > 50:
+            self.total_score += 4
+
+        # Cross bellow 50
+        elif self.data['rsi'][-2] >50 and self.data['rsi'][-1] < 50:
+            self.total_score -= 4
+
+        elif self.data['rsi'][-1] > 50:
+            self.total_score += 1
+        else:
+            pass
+
+    def signal_weight(self):
+        if self.total_score > 0:
+            if self.total_score > 7:
+                self.signal = 'Strong Buy'
+            elif self.total_score >= 5:
+                self.signal = 'Buy'
+            else:
+                self.signal = 'Neutral'
+        elif self.total_score <0:
+            if self.total_score < -7:
+                self.signal = 'Strong Sell'
+            elif self.total_score <= -5:
+                self.signal = 'Sell'
+            else:
+                self.signal = 'Neutral'
+        else:
+            self.signal = 'Neutral'
+
+
+def main():
+    start_date = '1/1/2020'
+    end_date = '1/1/2021'
+    quotes = ['Gold','Crude Oil WTI',
+            'US Soybeans','US Cocoa',
+            'Orange Juice', 'US Corn']
+
+    datasets = [Quotes(quote,start_date,end_date).data for quote in quotes]
+    data = dict(zip(quotes,datasets))
+
+    try:
+        os.remove("signal_status.csv")
+    except:
+        pass
+    for key,value in data.items():
+        score = Score(value).total_score
+        signal = Score(value).signal
+        close = value['Close'][-1]
+        high = value['High'][-1]
+        low = value['Low'][-1]
+        open_ = value['Open'][-1]
+        volume = value['Volume'][-1]
+
+        
+        text = f'{key},{score},{signal},{close},{high},{low},{open_},{volume}\n'
+        with open('signal_status.csv','a') as f:
+            f.write(text)
+        f.close()
 
 
 if __name__=='__main__':
 
-    start_date = '1/1/2020'
-    end_date = '1/1/2021'
-    quotes = ['Gold','Crude Oil WTI','US Corn']
+    main()
 
-    data = [Quotes(quote,start_date,end_date).data for quote in quotes]
-
-    oed_data = dict(zip(quotes,data))
-
-    print(oed_data['Gold'])
-
-    oed_data['Natural Gas'] = Quotes('Natural Gas',start_date,end_date).data
-
-    print(oed_data.keys())
-    # print(oed_data['Crude Oil WTI'].keys())
-    # gold = Quotes('Gold',start_date,end_date)
-    # oil = Quotes('Crude Oil WTI',start_date,end_date)
-    # print('\n\nthis is oil data')
-    # print(oil.data)
-
-    # print('\n\n This is gold data:')
-    # print(gold.data)
-
-    # print('\n\nthis is oil data')
-    # print(oil.data)
-
-    # data = c.get_data()
-    # data = c.moving_average(data)
-    # print(data)
-    # c = Signals()
-    # c.total_score()
     
 
     
