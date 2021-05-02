@@ -9,6 +9,14 @@ from ta import add_all_ta_features
 import matplotlib.pyplot as plt
 
 
+### TODO
+### Define weights of scoring
+### Add rules more scoring rules
+### Create a db to store the results (Replace csv)
+### Add options menu on gui
+### Add plots of selected field from tree view
+### Turn file from commodities only to universal
+
 class Quotes:
     def __init__(self,quote,start_date,end_date,time_int='Daily'):
         self.quote=quote
