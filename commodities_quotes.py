@@ -3,7 +3,7 @@ import pandas as pd
 import setup
 import os
 import ta
-from ta.trend import SMAIndicator
+from ta.trend import SMAIndicator, MACD
 from ta.momentum import RSIIndicator
 from ta import add_all_ta_features
 import matplotlib.pyplot as plt
@@ -37,6 +37,8 @@ class Quotes:
         # SMA n =20
         data['ma'] = SMAIndicator(data['Close'],20).sma_indicator()
         data['rsi'] = RSIIndicator(data['Close'],14).rsi()
+        data['macd'] = MACD(data['Close'],26,12,9).macd()
+        data['macd_signal'] = MACD(data['Close'],26,12,9).macd()
 
         return data
 
@@ -46,77 +48,93 @@ class Score:
         self.total_score = 0
         self.data = data
         self.signal = 'Neutral'
-        try:
-            self.ma_price_cross()
-        except:
-            pass
-        try:
-            self.trend()
-        except:
-            pass
-        try:
-            self.rsi()
-        except:
-            pass
+
+        # Attributes to set:
+        self.strong_buy = 7
+        self.buy = 3
+        self.sell = -3
+        self.strong_sell = -7
+        self.max_score = 10
+        self.min_score = -10
+
+        # Value of signal points weight
+        self.small = 1
+        self.medium = 2
+        self.high = 3
+
+        # What affectes the price
+        functions = [self.ma_price_cross(),
+                    self.macd(),
+                    self.rsi(),
+                    self.trend()]
+
+        for function in functions:
+            try:
+                function
+            except AttributeError:
+                pass
 
         self.signal_weight()
         
 
     def ma_price_cross(self):
         if self.data['Close'][-1] > self.data['ma'][-1] and self.data['Close'][-2] < self.data['ma'][-2]:
-            self.total_score += 4
+            self.total_score += self.high
         elif self.data['Close'][-1] < self.data['ma'][-1] and self.data['Close'][-2] > self.data['ma'][-2]:
-            self.total_score -= 4
+            self.total_score -= self.high
         else:
             pass
 
+    def macd(self):
+        # self.data['macd'] = MACD(self.data['close'],26,12,9).macd()
+        pass
+
     def trend(self):
         if self.data['Close'][-1] > self.data['Close'][-2]:
-            self.total_score += 4
+            self.total_score += self.medium
         elif self.data['Close'][-1] < self.data['Close'][-2]:
-            self.total_score -= 4
+            self.total_score -= self.medium
         else:
             pass
 
     def rsi(self):
         # Cross above 30
         if self.data['rsi'][-2] < 30 and self.data['rsi'][-1] > 30:
-            self.total_score += 4
+            self.total_score += self.medium
 
         # Cross bellow 70
         elif self.data['rsi'][-2] >70 and self.data['rsi'][-1] < 70:
-            self.total_score -= 4
+            self.total_score -= self.medium
 
         # Cross above 50
         elif self.data['rsi'][-2] < 50 and self.data['rsi'][-1] > 50:
-            self.total_score += 4
+            self.total_score += self.medium
 
         # Cross bellow 50
         elif self.data['rsi'][-2] >50 and self.data['rsi'][-1] < 50:
-            self.total_score -= 4
+            self.total_score -= self.medium
 
         elif self.data['rsi'][-1] > 50:
-            self.total_score += 1
+            self.total_score += self.medium
         else:
             pass
 
     def signal_weight(self):
-        if self.total_score > 0:
-            if self.total_score > 7:
-                self.signal = 'Strong Buy'
-            elif self.total_score >= 5:
-                self.signal = 'Buy'
-            else:
-                self.signal = 'Neutral'
-        elif self.total_score <0:
-            if self.total_score < -7:
-                self.signal = 'Strong Sell'
-            elif self.total_score <= -5:
-                self.signal = 'Sell'
-            else:
-                self.signal = 'Neutral'
+        if self.total_score > self.max_score:
+            self.total_score = self.max_score
+        if self.total_score < self.min_score:
+            self.total_score = self.min_score
+
+        if self.total_score >= self.strong_buy:
+            self.signal = 'Strong Buy'
+        elif self.buy <= self.total_score < self.strong_buy:
+            self.signal = 'Buy'
+        elif self.sell <= self.total_score < self.buy:
+            self.signal = ' Neutral'
+        elif self.strong_sell <= self.total_score < self.sell:
+            self.signal = 'Sell'
         else:
-            self.signal = 'Neutral'
+            self.signal = 'Strong Sell'
 
 
 def main():
@@ -150,9 +168,38 @@ def main():
 
 
 if __name__=='__main__':
+    
+    pd.set_option("display.max_rows", 100, "display.max_columns", None)
 
-    main()
+    # main()
+    start_date = '1/1/2020'
+    end_date = '1/1/2021'
+    quotes = ['Gold','Crude Oil WTI',
+            'US Soybeans','US Cocoa',
+            'Orange Juice', 'US Corn']
 
+    datasets = [Quotes(quote,start_date,end_date).data for quote in quotes]
+    data = dict(zip(quotes,datasets))
+
+    try:
+        os.remove("signal_status.csv")
+    except:
+        pass
+    for key,value in data.items():
+        
+        score = Score(value).total_score
+        signal = Score(value).signal
+        close = value['Close'][-1]
+        high = value['High'][-1]
+        low = value['Low'][-1]
+        open_ = value['Open'][-1]
+        volume = value['Volume'][-1]
+        print(key,score,signal)
+
+    print(data['Gold'])
+    plt.plot(data['Gold'].index,data['Gold']['macd'])
+    plt.plot(data['Gold'].index,data['Gold']['macd_signal'])
+    plt.show()
     
 
     
