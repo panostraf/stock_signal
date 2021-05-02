@@ -40,6 +40,10 @@ class MainWindow:
         # Create treeview object
         self.tree_ = self.signals_tree()
         self.tree_.pack(fill=BOTH,expand=1,padx=10,pady=10)
+
+        # Plot Area
+        self.plots = Frame(self.signals)
+        self.plots.pack(fill=BOTH,expand=1,padx=10,pady=10)
         #populate tree
         self.add_values()
 
@@ -60,7 +64,10 @@ class MainWindow:
         
 
     def add_values(self):
-        data = open('signal_status.csv','r').readlines()
+        try:
+            data = open('signal_status.csv','r').readlines()
+        except FileNotFoundError:
+            data = open('signal_status.csv','w+').readlines()
         counter = 0
         for line in data:
             line = line.split(',')
@@ -100,3 +107,4 @@ if __name__=='__main__':
     root.geometry("800x800")
     MainWindow(root)
     root.mainloop()
+

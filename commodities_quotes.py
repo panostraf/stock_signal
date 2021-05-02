@@ -41,18 +41,20 @@ class Quotes:
 
     
     def add_indicators(self,data):
-
         # SMA n =20
         data['ma'] = SMAIndicator(data['Close'],20).sma_indicator()
         data['rsi'] = RSIIndicator(data['Close'],14).rsi()
         data['macd'] = MACD(data['Close'],26,12,9).macd()
         data['macd_signal'] = MACD(data['Close'],26,12,9).macd()
-
         return data
+
+    def send_signals(self):
+        pass
 
 
 class Score:
     def __init__(self,data):
+        
         self.total_score = 0
         self.data = data
         self.signal = 'Neutral'
@@ -144,6 +146,7 @@ class Score:
         else:
             self.signal = 'Strong Sell'
 
+    
 
 def main():
     start_date = '1/1/2020'
@@ -159,6 +162,7 @@ def main():
         os.remove("signal_status.csv")
     except:
         pass
+
     for key,value in data.items():
         score = Score(value).total_score
         signal = Score(value).signal
@@ -179,35 +183,6 @@ if __name__=='__main__':
     
     pd.set_option("display.max_rows", 100, "display.max_columns", None)
 
-    # main()
-    start_date = '1/1/2020'
-    end_date = '1/1/2021'
-    quotes = ['Gold','Crude Oil WTI',
-            'US Soybeans','US Cocoa',
-            'Orange Juice', 'US Corn']
-
-    datasets = [Quotes(quote,start_date,end_date).data for quote in quotes]
-    data = dict(zip(quotes,datasets))
-
-    try:
-        os.remove("signal_status.csv")
-    except:
-        pass
-    for key,value in data.items():
-        
-        score = Score(value).total_score
-        signal = Score(value).signal
-        close = value['Close'][-1]
-        high = value['High'][-1]
-        low = value['Low'][-1]
-        open_ = value['Open'][-1]
-        volume = value['Volume'][-1]
-        print(key,score,signal)
-
-    print(data['Gold'])
-    plt.plot(data['Gold'].index,data['Gold']['macd'])
-    plt.plot(data['Gold'].index,data['Gold']['macd_signal'])
-    plt.show()
-    
+    main()
 
     
