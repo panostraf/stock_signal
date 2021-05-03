@@ -1,12 +1,15 @@
 import investpy as inv
 import pandas as pd
-import setup
+import warnings
 import os
 import ta
-from ta.trend import SMAIndicator, MACD
+from ta.trend import SMAIndicator, MACD, ADXIndicator
 from ta.momentum import RSIIndicator
 from ta import add_all_ta_features
 import matplotlib.pyplot as plt
+import matplotlib
+import multiprocessing
+matplotlib.use('TkAgg')
 
 
 ### TODO
@@ -33,6 +36,8 @@ class Quotes:
                 to_date= self.end_date
                 )
             self.add_indicators(data)
+            # self.save_data(data)
+            # threading.Thread(target = self.save_plots(data)).start()
             
 
             return data
@@ -41,15 +46,23 @@ class Quotes:
 
     
     def add_indicators(self,data):
+        warnings.filterwarnings("ignore",category=RuntimeWarning)
         # SMA n =20
         data['ma'] = SMAIndicator(data['Close'],20).sma_indicator()
         data['rsi'] = RSIIndicator(data['Close'],14).rsi()
         data['macd'] = MACD(data['Close'],26,12,9).macd()
-        data['macd_signal'] = MACD(data['Close'],26,12,9).macd()
+        data['macd_signal'] = MACD(data['Close'],26,12,9).macd_signal()
+        data['macd_hist'] = MACD(data['Close'],26,12,9).macd_diff()
+        data['adx'] = ADXIndicator(data['High'],data['Low'],data['Close'],14).adx()        
+        data['adx_neg'] = ADXIndicator(data['High'],data['Low'],data['Close'],14).adx_neg()
+        data['adx_pos'] = ADXIndicator(data['High'],data['Low'],data['Close'],14).adx_pos()
+
         return data
 
     def send_signals(self):
         pass
+
+
 
 
 class Score:
@@ -64,70 +77,82 @@ class Score:
         self.buy = 3
         self.sell = -3
         self.strong_sell = -7
-        self.max_score = 10
-        self.min_score = -10
+        self.max_score = 20
+        self.min_score = -20
 
         # Value of signal points weight
         self.small = 1
         self.medium = 2
         self.high = 3
 
-        # What affectes the price
-        functions = [self.ma_price_cross(),
-                    self.macd(),
-                    self.rsi(),
-                    self.trend()]
+        # How many days back to check if condition is met
+        self.days_back = 4
 
-        for function in functions:
+        # What affectes the price
+        functions = []
+
+        for i in range(self.days_back):
             try:
-                function
+                self.ma_price_cross(i),
+                self.macd(i),
+                self.rsi(i),
+                # self.trend()
             except AttributeError:
                 pass
 
         self.signal_weight()
         
 
-    def ma_price_cross(self):
-        if self.data['Close'][-1] > self.data['ma'][-1] and self.data['Close'][-2] < self.data['ma'][-2]:
+    def ma_price_cross(self,i):
+        # Check if price crosses above or bellow moving average
+        if self.data['Close'][-1+i] > self.data['ma'][-1+i] and self.data['Close'][-2+i] < self.data['ma'][-2+i]:
             self.total_score += self.high
-        elif self.data['Close'][-1] < self.data['ma'][-1] and self.data['Close'][-2] > self.data['ma'][-2]:
+        elif self.data['Close'][-1+i] < self.data['ma'][-1+i] and self.data['Close'][-2+i] > self.data['ma'][-2+i]:
             self.total_score -= self.high
         else:
             pass
 
-    def macd(self):
-        # self.data['macd'] = MACD(self.data['close'],26,12,9).macd()
+    def macd(self,i):
+        # Checks if macd crosses macd signal
+        if self.data['macd'][-2+i] < self.data['macd_signal'][-2+i] and self.data['macd'][-1+i] > self.data['macd_signal'][-1+i]:
+            self.total_score += self.medium
+        elif self.data['macd'][-2+i] > self.data['macd_signal'][-2+i] and self.data['macd'][-1+i] < self.data['macd_signal'][-1+i]:
+            self.total_score -= self.medium
         pass
 
     def trend(self):
+        # Checks if last day is higher or lower than previous day
         if self.data['Close'][-1] > self.data['Close'][-2]:
-            self.total_score += self.medium
+            self.total_score += self.small
         elif self.data['Close'][-1] < self.data['Close'][-2]:
-            self.total_score -= self.medium
+            self.total_score -= self.small
         else:
             pass
 
-    def rsi(self):
+    def rsi(self,i):
         # Cross above 30
-        if self.data['rsi'][-2] < 30 and self.data['rsi'][-1] > 30:
+        if self.data['rsi'][-2+i] < 30 and self.data['rsi'][-1+i] > 30:
             self.total_score += self.medium
 
         # Cross bellow 70
-        elif self.data['rsi'][-2] >70 and self.data['rsi'][-1] < 70:
+        elif self.data['rsi'][-2+i] >70 and self.data['rsi'][-1+i] < 70:
             self.total_score -= self.medium
 
         # Cross above 50
-        elif self.data['rsi'][-2] < 50 and self.data['rsi'][-1] > 50:
+        elif self.data['rsi'][-2+i] < 50 and self.data['rsi'][-1+i] > 50:
             self.total_score += self.medium
 
         # Cross bellow 50
-        elif self.data['rsi'][-2] >50 and self.data['rsi'][-1] < 50:
+        elif self.data['rsi'][-2+i] >50 and self.data['rsi'][-1+i] < 50:
             self.total_score -= self.medium
 
-        elif self.data['rsi'][-1] > 50:
+        elif self.data['rsi'][-1+i] > 50:
             self.total_score += self.medium
         else:
             pass
+
+    def adx_(self):
+        pass
 
     def signal_weight(self):
         if self.total_score > self.max_score:
@@ -146,15 +171,27 @@ class Score:
         else:
             self.signal = 'Strong Sell'
 
-    
+
+
+def save_data(quote,data):
+    data.to_csv(f'datasets/{quote}.csv')
+
+def save_plot(quote,data):
+    plt.figure()
+    plt.plot(data.index,data['Close'])
+    plt.xticks(rotation=90)
+    plt.savefig(f'plots/{quote}.png')
+   
 
 def main():
+    # This function is calling all classes in order to refresh and store data
+    # And is called from gui every 2 hours
     start_date = '1/1/2020'
-    end_date = '1/1/2021'
+    end_date = '5/5/2021'
     quotes = ['Gold','Crude Oil WTI',
             'US Soybeans','US Cocoa',
             'Orange Juice', 'US Corn']
-
+    # quotes = ['Gold','Orange Juice']
     datasets = [Quotes(quote,start_date,end_date).data for quote in quotes]
     data = dict(zip(quotes,datasets))
 
@@ -163,7 +200,15 @@ def main():
     except:
         pass
 
+
+    
+
     for key,value in data.items():
+
+        # Use different proccecor for matplotlib grapghs
+        multiprocessing.Process(target=save_plot,args=(key,value[-90:])).start()
+        save_data(key,value)
+
         score = Score(value).total_score
         signal = Score(value).signal
         close = value['Close'][-1]
@@ -172,7 +217,7 @@ def main():
         open_ = value['Open'][-1]
         volume = value['Volume'][-1]
 
-        
+        #Save Signals to csv
         text = f'{key},{score},{signal},{close},{high},{low},{open_},{volume}\n'
         with open('signal_status.csv','a') as f:
             f.write(text)
@@ -180,9 +225,6 @@ def main():
 
 
 if __name__=='__main__':
-    
-    pd.set_option("display.max_rows", 100, "display.max_columns", None)
-
     main()
 
     

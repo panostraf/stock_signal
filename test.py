@@ -5,6 +5,7 @@ from tkinter import ttk
 import time
 import threading
 import commodities_quotes
+import matplotlib.pyplot as plt
 # commodities_l = inv.get_commodities()
 # for item in commodities_l['name']:
 #     print(item)
@@ -14,17 +15,23 @@ class MainWindow:
     
 
     def __init__(self,master):
-        self.columns = ['Contract','Strength','Signal',
-                        'Last','High','Low','Open','Volume',
-                        'SMA','RSI','MACD','ADX']
+
+        # last_update = 0
+        self.columns = ['Contract','Strength','Signal', 'Last','High','Low','Open','Volume']
 
         # Main Frame to host all subframes of the window
         self.main_frame = Frame(master)
         self.main_frame.pack(fill = BOTH,expand=1)
 
         # Headers frame and content frame are subframes of main
-        self.headers = Frame(self.main_frame,height=50)
+        self.headers = Frame(self.main_frame,height=100)
         self.headers.pack(side=TOP,fill='x')
+
+        self.headers_label = Label(self.headers,text='Omen Financial Consulting')
+        self.headers_label.pack()
+
+        self.last_update = Label(self.headers,text = f'last_update: {time.strftime("%H:%M:%S", time.localtime())}')
+        self.last_update.pack(side=LEFT,padx=10)
 
         self.content = Frame(self.main_frame)
         self.content.pack(side=BOTTOM,fill=BOTH,expand=1)
@@ -39,6 +46,7 @@ class MainWindow:
 
         # Create treeview object
         self.tree_ = self.signals_tree()
+        self.tree_.bind("<Double-1>", self.printer)
         self.tree_.pack(fill=BOTH,expand=1,padx=10,pady=10)
 
         # Plot Area
@@ -90,7 +98,30 @@ class MainWindow:
         while True:
             commodities_quotes.main()
             self.refresh()
-            time.sleep(5)
+            current_time = time.strftime("%H:%M:%S", time.localtime())
+            self.last_update.config(text = f'last_update: {current_time}')
+            time.sleep(100)
+
+    def printer(self,event):
+        # item = self.tree_.identify('item',event.x,event.y)
+        # print("you clicked on", self.tree_.item(item,"text"))
+        # print(item[1])
+
+        item = self.tree_.selection()
+        # print(self.tree_.item(i, "values")[0])
+        for i in item:
+            name = self.tree_.item(i, "values")[0]
+        print(name)
+
+        #     print()
+        # data  = pd.read_csv(f'datasets/{name}.csv')
+        # print(data)
+        # plt.plot(data.index,data['Close'])
+        # plt.savefig(f'datasets/{name}.png')
+        #     print(values)
+        #     plt.figure(figsize=(10,10))
+        #     plt.plot(values.index,values['Close'])
+        #     plt.savefig()
 
             
 

@@ -1,6 +1,8 @@
 venv/
-
+*.png
 *.csv
 *.pcy
 .idea
 commodities/
+*.DS_Store
+.DS_Store
