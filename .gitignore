@@ -6,3 +6,5 @@ venv/
 commodities/
 *.DS_Store
 .DS_Store
+*.jpeg
+*.jpg
