@@ -6,6 +6,8 @@ import time
 import threading
 import commodities_quotes
 import matplotlib.pyplot as plt
+
+from PIL import ImageTk, Image
 # commodities_l = inv.get_commodities()
 # for item in commodities_l['name']:
 #     print(item)
@@ -49,9 +51,12 @@ class MainWindow:
         self.tree_.bind("<Double-1>", self.printer)
         self.tree_.pack(fill=BOTH,expand=1,padx=10,pady=10)
 
-        # Plot Area
-        self.plots = Frame(self.signals)
-        self.plots.pack(fill=BOTH,expand=1,padx=10,pady=10)
+        # Footer
+        self.plots = Frame(self.signals,height=100)#, bg='red')
+        self.plots.pack(fill= 'x',expand=1,padx=10, pady=10)
+
+        # self.plot_canvas = Label(self.plots,height=100,width=100,bg='white')
+        # self.plot_canvas.grid(row=0,column=0)
         #populate tree
         self.add_values()
 
@@ -103,27 +108,20 @@ class MainWindow:
             time.sleep(100)
 
     def printer(self,event):
-        # item = self.tree_.identify('item',event.x,event.y)
-        # print("you clicked on", self.tree_.item(item,"text"))
-        # print(item[1])
 
         item = self.tree_.selection()
-        # print(self.tree_.item(i, "values")[0])
         for i in item:
             name = self.tree_.item(i, "values")[0]
         print(name)
 
-        #     print()
-        # data  = pd.read_csv(f'datasets/{name}.csv')
-        # print(data)
-        # plt.plot(data.index,data['Close'])
-        # plt.savefig(f'datasets/{name}.png')
-        #     print(values)
-        #     plt.figure(figsize=(10,10))
-        #     plt.plot(values.index,values['Close'])
-        #     plt.savefig()
+        top = Toplevel()
+        bg = ImageTk.PhotoImage(file=f"plots/{name.replace(' ','_')}.jpeg")
+        label = Label(top,image=bg)
+        label.pack(fill=BOTH,expand=1)
+        top.mainloop()
 
-            
+        # bg = ImageTk.PhotoImage(file=f"plots/{name.replace(' ','_')}.jpeg")
+        # self.plot_canvas.config(image=bg,anchor='nw')
 
 
 

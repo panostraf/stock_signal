@@ -8,7 +8,9 @@ from ta.momentum import RSIIndicator
 from ta import add_all_ta_features
 import matplotlib.pyplot as plt
 import matplotlib
+from matplotlib import gridspec
 import multiprocessing
+from datetime import datetime
 matplotlib.use('TkAgg')
 
 
@@ -177,10 +179,42 @@ def save_data(quote,data):
     data.to_csv(f'datasets/{quote}.csv')
 
 def save_plot(quote,data):
-    plt.figure()
-    plt.plot(data.index,data['Close'])
-    plt.xticks(rotation=90)
-    plt.savefig(f'plots/{quote}.png')
+    warnings.filterwarnings("ignore",category=UserWarning)
+    fig = plt.figure(figsize=(12,8))
+    # plt.title(quote)
+    charts = gridspec.GridSpec(ncols=1,nrows=4,height_ratios=[4,1,1,1])
+
+
+    ax1 = fig.add_subplot(charts[0,0])
+
+    # ax1.set_figheight(10)
+    ax1.plot(data.index,data['Close'])
+    ax1.set_xticks([])
+    ax1.set_title(f'{quote} Price')
+
+    ax2 = fig.add_subplot(charts[1,0])
+    ax2.plot(data.index,data['macd'])
+    ax2.plot(data.index,data['macd_signal'])
+    ax2.bar(data.index,data['macd_hist'])
+    ax2.set_xticks([])
+    ax2.set_title('MACD')
+
+
+    ax3 = fig.add_subplot(charts[2,0])
+    ax3.plot(data.index,data['rsi'])
+    ax3.set_xticks([])
+    ax3.set_title('RSI')
+
+    ax4 = fig.add_subplot(charts[3,0])
+    ax4.plot(data.index,data['adx'])
+    ax4.plot(data.index,data['adx_neg'])
+    ax4.plot(data.index,data['adx_pos'])
+    ax4.set_title('ADX')
+    # ax4.set_xticklabels(data.index.astype(datetime),Rotation=45)
+    # plt.xticks(Rotation=45)
+    # print(data.index)
+
+    plt.savefig(f"plots/{quote.replace(' ','_')}.jpeg", bbox_inches='tight')
    
 
 def main():
