@@ -11,6 +11,7 @@ import matplotlib
 from matplotlib import gridspec
 import multiprocessing
 from datetime import datetime
+import json
 matplotlib.use('TkAgg')
 
 
@@ -21,6 +22,11 @@ matplotlib.use('TkAgg')
 ### Add options menu on gui
 ### Add plots of selected field from tree view
 ### Turn file from commodities only to universal
+
+
+### URGENT!
+### Create initialization file to auto create folders if not exists
+### Convert file to .exe
 
 class Quotes:
     def __init__(self,quote,start_date,end_date,time_int='Daily'):
@@ -69,6 +75,8 @@ class Quotes:
 
 class Score:
     def __init__(self,data):
+
+        self.parameters = json.load(open('parameters.json'))
         
         self.total_score = 0
         self.data = data
@@ -83,9 +91,9 @@ class Score:
         self.min_score = -20
 
         # Value of signal points weight
-        self.small = 1
-        self.medium = 2
-        self.high = 3
+        self.small = int(self.parameters['low'])
+        self.medium = int(self.parameters['medium'])
+        self.high = int(self.parameters['high'])
 
         # How many days back to check if condition is met
         self.days_back = 4
@@ -95,7 +103,7 @@ class Score:
 
         for i in range(self.days_back):
             try:
-                self.ma_price_cross(i),
+                # self.ma_price_cross(i),
                 self.macd(i),
                 self.rsi(i),
                 # self.trend()
