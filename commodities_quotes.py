@@ -248,7 +248,7 @@ def main():
     for key,value in data.items():
 
         # Use different proccecor for matplotlib grapghs
-        multiprocessing.Process(target=save_plot,args=(key,value[-90:])).start()
+        multiprocessing.Process(target=save_plot,args=(key,value[-180:])).start()
         save_data(key,value)
 
         score = Score(value).total_score

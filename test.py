@@ -152,18 +152,10 @@ class Settings_():
 
         def parameters_dict():
             # Get values from entries and save to json
-            # rsiu = e_sru.get()
-            # rsid = e_srd.get()
-            macdu = e_macu.get()
-            macdd = e_macd.get()
             low = e_low.get()
             medium = e_medium.get()
             high = e_high.get()
-            parameters = {'rsiu' : str(entry_rsi_up),
-                            'rsid' : str(entry_rsi_down),
-                            'macdu' : macdu,
-                            'macdd' : macdd,
-                            'low':low,
+            parameters = {  'low':low,
                             'medium': medium,
                             'high': high
                             }
@@ -178,60 +170,31 @@ class Settings_():
 
 
         options = ['Low','Medium','High']
-        # RSI Up
-        entry_rsi_up = StringVar()
-        entry_rsi_up.set('Low')
-        sru = Label(self.top1,text = 'RSI Cross 30 Up:')
-        sru.grid(row = 1, column = 0, padx = 10, pady = 5)
-        e_sru = OptionMenu(self.top1,entry_rsi_up,*options)
-        e_sru.grid(row = 1, column = 1, padx = 10, pady = 5,)
-
-        # RSI Down
-        entry_rsi_down = StringVar()
-        entry_rsi_down.set('Low')
-        srd = Label(self.top1,text = 'RSI Cross 30 Down:')
-        srd.grid(row = 2, column = 0, padx = 10, pady = 5)
-        e_srd = OptionMenu(self.top1,entry_rsi_down,*options)
-        e_srd.grid(row = 2, column = 1, padx = 10, pady = 5)
-
-        #MACD Up
-        macu = Label(self.top1,text = 'MACD cross signal line up')
-        macu.grid(row = 3, column = 0, padx = 10, pady = 5)
-        e_macu = Entry(self.top1)
-        e_macu.grid(row = 3, column = 1, padx = 10, pady = 5)
-
-
-        #MACD Down
-        macd = Label(self.top1,text = 'MACD cross signal line down')
-        macd.grid(row = 4, column = 0, padx = 10, pady = 5)
-        e_macd = Entry(self.top1)
-        e_macd.grid(row = 4, column = 1, padx = 10, pady = 5)
-
-
 
 
         low = Label(self.top1,text = 'Low')
         low.grid(row = 5, column = 0, padx = 10, pady = 5)
         e_low = Entry(self.top1)
         e_low.grid(row = 5, column = 1, padx = 10, pady = 5)
+        e_low.insert(0,read_parameters()['low'])
 
         medium = Label(self.top1,text = 'medium')
         medium.grid(row = 6, column = 0, padx = 10, pady = 5)
         e_medium = Entry(self.top1)
         e_medium.grid(row = 6, column = 1, padx = 10, pady = 5)
+        e_medium.insert(0,read_parameters()['medium'])
 
         high = Label(self.top1,text = 'high')
         high.grid(row = 7, column = 0, padx = 10, pady = 5)
         e_high = Entry(self.top1)
         e_high.grid(row = 7, column = 1, padx = 10, pady = 5)
-
-
+        e_high.insert(0,read_parameters()['high'])
+        
         
         # Save Btn
-        save_btn = Button(self.top1, text = 'hi', command = lambda: parameters_dict())
+        save_btn = Button(self.top1, text = 'Save', command = lambda: parameters_dict())
         save_btn.grid(row=8,column=1)
 
-        # self.top1.mainloop()
 
         
 
